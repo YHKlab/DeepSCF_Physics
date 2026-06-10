@@ -32,9 +32,9 @@ pip install -r requirements.txt
 
 If you plan to use a GPU with PyTorch, ensure that you install the appropriate PyTorch version compatible with your system and CUDA version. Refer to the [PyTorch installation guide](https://pytorch.org/get-started/previous-versions/) for detailed instructions .
 
-### Custom SIESTA Code
+### Custom SIESTA Code  
 
-The modified [`SIESTA` code](https://github.com/Ryong-Gyu/SIESTA-for-DeepSCF) is required to generate grid-projected input features and perform non-SCF calculations using a predicted `RHO`. Please follow the installation and usage instructions in that repository.  
+The modified [SIESTA code](https://github.com/Ryong-Gyu/SIESTA-for-DeepSCF) is required to generate grid-projected input features and perform non-SCF calculations using a predicted `RHO`. Please follow the installation and usage instructions in that repository.  
 
 ```
 git clone https://github.com/Ryong-Gyu/SIESTA-for-DeepSCF.git

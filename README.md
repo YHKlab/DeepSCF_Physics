@@ -34,7 +34,7 @@ If you plan to use a GPU with PyTorch, ensure that you install the appropriate P
 
 ### Custom SIESTA Code  
 
-The modified [SIESTA code](https://github.com/Ryong-Gyu/SIESTA-for-DeepSCF) is required to generate grid-projected input features and perform non-SCF calculations using a predicted `RHO`. Please follow the installation and usage instructions in that repository.  
+The [modified SIESTA code](https://github.com/Ryong-Gyu/SIESTA-for-DeepSCF) is required to generate grid-projected input features and perform non-SCF calculations using a predicted `RHO`. Please follow the installation and usage instructions in that repository.  
 
 ```
 git clone https://github.com/Ryong-Gyu/SIESTA-for-DeepSCF.git

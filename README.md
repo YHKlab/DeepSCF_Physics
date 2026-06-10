@@ -32,6 +32,15 @@ pip install -r requirements.txt
 
 If you plan to use a GPU with PyTorch, ensure that you install the appropriate PyTorch version compatible with your system and CUDA version. Refer to the [PyTorch installation guide](https://pytorch.org/get-started/previous-versions/) for detailed instructions .
 
+### Custom SIESTA Code
+
+The modified [`SIESTA` code](https://github.com/Ryong-Gyu/SIESTA-for-DeepSCF) is required to generate grid-projected input features and perform non-SCF calculations using a predicted `RHO`. Please follow the installation and usage instructions in that repository.  
+
+```
+git clone https://github.com/Ryong-Gyu/SIESTA-for-DeepSCF.git
+```
+
+
 ### Prepare the dataset 
 
 
@@ -106,9 +115,12 @@ python predict.py
 
 Then, the predicted $\rho$ for each material will be stored in in SIESTA `grid object` based on the `sietaio.py` module.
 
-## Predict electronic structures with DeepSCF
 
-After obtaining the $\rho$ in the SIESTA `grid object` format, the electronic structures can be also predicted by performing a single-shot self-consistent field (SCF) calculation. The original SIESTA does not natively support to read the $\rho$ for setting it as initial condition. To enable this functionality, the SIESTA `dhscf.F` source code can be modified to read the SIESTA `grid object` at the intial stage of SCF calculation, utilizing the `readGrid()` subroutine. Then, perform the DFT calculation with the `MaxSCFIterations` option set to 1.
+## Predict Electronic Structures with DeepSCF  
+
+After obtaining the predicted electron density $\rho$ in the SIESTA `grid object` format, the corresponding electronic structure can be evaluated by performing a single-shot non-SCF calculation.  
+
+As mentioned above, the original SIESTA code does not natively support reading an external charge density $\rho$ and using it as the initial or fixed input density. To enable this functionality, use the modified [`SIESTA` code](https://github.com/Ryong-Gyu/SIESTA-for-DeepSCF).  
 
 ## How to cite
 If you want to use DeepSCF, please cite:

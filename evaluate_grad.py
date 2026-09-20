@@ -8,6 +8,7 @@ import pickle
 import h5py
 import glob
 from config_loader import get_args
+from model.convolution import gradient_3point
 
 
 def evaluate(args, device, test_list, model, train_list = None):
@@ -23,37 +24,49 @@ def evaluate(args, device, test_list, model, train_list = None):
 
     model.eval()
 
+
     # logging
     Logger = log.logger(path='./evaluate.txt')
+    summary = open('summary_grad.txt', 'w')
 
+    # evaluate test loss
 
     # loss function
     loss = nn.L1Loss(reduction='sum')
-
-    ne = 0 # total number of electron
-    mae = 0 # mean absolute error
+    gradient_mae = 0
+    tot_grad = 0 # total absolute gradient
 
     ### evaluate test loss
     if args.is_test:
-        with torch.no_grad():
+        with torch.no_grad(): # no train
             for path in test_list:
                 print(path)
+                # load output within GPU
                 data, target = load_hdf5(path)
                 data, target = data.to(device), target.to(device)
                 output = model(data)
-                mae += loss(output, target).item()
-                ne += torch.sum(target).item()
-                p_error = 100 * loss(output, target).item() / torch.sum(target).item()
-                print(p_error)
+
+                # apply gradient kernel
+                output_grad_x, output_grad_y, output_grad_z, = gradient_3point(output, device)
+                target_grad_x, target_grad_y, target_grad_z, = gradient_3point(target, device)
+
+                # calculate gradient
+                output_grad = torch.sqrt(output_grad_x**2 + output_grad_y**2 + output_grad_z**2)
+                target_grad = torch.sqrt(target_grad_x**2 + target_grad_y**2 + target_grad_z**2)
+
+                gradient_mae += loss(output_grad, target_grad).item()
+                tot_grad += torch.sum(target_grad).item()
+
+                # percentage error
+                p_error = 100 * loss(output_grad, target_grad).item() / torch.sum(target_grad).item()
+
                 # logging
                 Logger.update(path=path, loss=p_error)
 
-        # save log
-        Logger.save()
+        # total percentage error
+        percentage_error = gradient_mae/tot_grad*100
 
-        percentage_error = mae/ne*100
-        with open('summary.txt', 'w') as f:
-            f.write(f'Test percentage error: {percentage_error} \n')
+        summary.write(f'Test gradient percentage error: {percentage_error} \n')
         print(f'Percentage error: {percentage_error} \n')
 
     ### evaluate train loss
@@ -61,26 +74,39 @@ def evaluate(args, device, test_list, model, train_list = None):
         if train_list != None:
             with torch.no_grad():
                 for path in train_list:
+
                     print(path)
+                    # load output within GPU
                     data, target = load_hdf5(path)
                     data, target = data.to(device), target.to(device)
                     output = model(data)
-                    mae += loss(output, target).item()
-                    ne += torch.sum(target).item()
-                    p_error = 100 * loss(output, target).item() / torch.sum(target).item()
+
+                    # apply gradient kernel
+                    output_grad_x, output_grad_y, output_grad_z, = gradient_3point(output, device)
+                    target_grad_x, target_grad_y, target_grad_z, = gradient_3point(target, device)
+
+                    # calculate gradient
+                    output_grad = torch.sqrt(output_grad_x**2 + output_grad_y**2 + output_grad_z**2)
+                    target_grad = torch.sqrt(target_grad_x**2 + target_grad_y**2 + target_grad_z**2)
+
+                    gradient_mae += loss(output_grad, target_grad).item()
+                    tot_grad += torch.sum(target_grad).item()
+
+                    # percentage error
+                    p_error = 100 * loss(output_grad, target_grad).item() / torch.sum(target_grad).item()
 
                     # logging
                     Logger.update(path=path, loss=p_error)
 
-            # save log
-            Logger.save()
 
-            percentage_error = mae/ne*100
-            with open('summary.txt', 'w') as f:
-                f.write(f'Train percentage error: {percentage_error} \n')
+            # total percentage error
+            percentage_error = gradient_mae/tot_grad*100
+            summary.write(f'Train gradient percentage error: {percentage_error} \n')
             print(f'Percentage error: {percentage_error} \n')
 
-
+    # save log
+    Logger.save()
+    summary.close()
 
 def main(args: OmegaConf):
 

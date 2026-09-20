@@ -109,7 +109,7 @@ class FortranFile(file):
 
     def __init__(self, fname, mode = 'rb', endian='<', header_prec='i', *args, **kwargs):
         """Open a Fortran unformatted file for writing.
-        
+
         Parameters
         ----------
         endian : character, optional
@@ -185,7 +185,7 @@ class FortranFile(file):
         Parameters
         ----------
         s : the string to write
-        
+
         """
         self.writeRecord(s)
 
@@ -193,13 +193,13 @@ class FortranFile(file):
 
     def readReals(self, prec='f'):
         """Read in an array of real numbers.
-        
+
         Parameters
         ----------
         prec : character, optional
             Specify the precision of the array using character codes from
             Python's struct module.  Possible values are 'd' and 'f'.
-            
+
         """
 
         _numpy_precisions = {'d': numpy.float64,
@@ -240,14 +240,14 @@ class FortranFile(file):
 
     def readInts(self, prec='i'):
         """Read an array of integers.
-        
+
         Parameters
         ----------
         prec : character, optional
-            Specify the precision of the data to be read using 
+            Specify the precision of the data to be read using
             character codes from Python's struct module.  Possible
             values are 'h', 'i', 'l' and 'q'
-            
+
         """
         if prec not in self._int_precisions:
             raise ValueError('Not an appropriate precision')

@@ -1,0 +1,72 @@
+is_test: true
+
+dataset:
+  path: null
+  use_cache: false
+  cache_size: max
+  augmentation: 1
+  batch_size: 1
+  ratio: 0.8
+  seed: 10
+  mesh_after_crop: 0
+
+dataloader:
+  num_workers: 3
+  pin_memory: true
+
+model:
+  rho0_index: 0
+  rho0_mean: null
+  rho0_std: null
+  input_layers: null
+  input_layers_index: null
+  cbam: [0, 0, 0]
+  depthwise_layers: [0, 0, 1]
+  layers: 32
+  residual: true
+  kernal_size: 5
+  activation_function: ReLU
+  pooling_method: max
+  padding_mode: circular
+  normalization: true
+
+logger:
+  path: ./train.txt
+  interval: 1
+
+train:
+  optimizer:
+    lr: 0.00003
+    weight_decay: 0.0
+    step_size: 50
+    gamma: 0.8
+  epochs: 100
+  save:
+    interval: 10
+  load:
+    enabled: false
+    model: null
+    dataloader: null
+  loss:
+    reduction: sum
+    regularization: null
+    regularization_weight: null
+
+evaluate:
+  model: null
+  target: null
+
+predict:
+  model: null
+  target:
+    path: null
+    grid_spacing: 0.2
+
+dft:
+  predicted: null
+  reference: null
+  predicted_output_subdir: OUT
+  reference_output_subdir: ''
+  predicted_energy_label: Etot_bs
+  reference_energy_label: Etot
+  result: dft_results_test.pkl

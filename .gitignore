@@ -1,0 +1,21 @@
+__pycache__/
+*.py[cod]
+
+# Model and dataset artifacts
+*.pt
+*.pkl
+*.h5
+*.hdf5
+
+# DeepSCF run outputs
+train.txt
+evaluate.txt
+predict.txt
+summary.txt
+summary_grad.txt
+*.RHO
+
+# DFT post-processing outputs
+dft_results_*.pkl
+dft_summary_*.txt
+plot_*.png

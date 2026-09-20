@@ -1,0 +1,48 @@
+# Public example corresponding to a six-feature physics-aware model.
+# Replace paths with local dataset and checkpoint locations.
+is_test: true
+
+dataset:
+  path: /path/to/dataset/total
+  augmentation: 1
+
+model:
+  rho0_index: 0
+  rho0_mean: 0.001374538411959847
+  rho0_std: 0.015357413692189525
+  input_layers: 6
+  input_layers_index: [0, 1, 2, 7, 8, 11]
+  depthwise_layers: [0, 0, 1]
+  normalization: true
+
+logger:
+  path: ./train.txt
+  interval: 1
+
+train:
+  epochs: 50
+  save:
+    interval: 10
+  loss:
+    regularization: [gradient_3p]
+    regularization_weight:
+      gradient: 0.1
+
+evaluate:
+  model: /path/to/checkpoint/50_model.pt
+  target: /path/to/checkpoint/data.pkl
+
+predict:
+  model: /path/to/checkpoint/50_model.pt
+  target:
+    path: /path/to/checkpoint/data.pkl
+    grid_spacing: 0.2
+
+dft:
+  predicted: /path/to/fixed-rho/calculations
+  reference: /path/to/self-consistent/calculations
+  predicted_output_subdir: OUT
+  reference_output_subdir: ''
+  predicted_energy_label: Etot_bs
+  reference_energy_label: Etot
+  result: dft_results_test.pkl

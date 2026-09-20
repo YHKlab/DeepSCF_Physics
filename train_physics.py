@@ -1,6 +1,6 @@
 import torch
 import torch.optim as optim
-from metric import train, test
+from metric import train_physics, test
 from utils import log, data
 from model import DeepSCF
 from omegaconf import OmegaConf
@@ -56,7 +56,7 @@ def main(args: OmegaConf):
 
     # optimize
     for epoch in range(start_epoch, args.train.epochs+1):
-        train_loss = train(args, model, device, train_loader, optimizer, epoch)
+        train_loss = train_physics(args, model, device, train_loader, optimizer, epoch)
         test_loss, test_acc = test(args, model, device, test_loader)
         Logger.update(epoch = epoch,
                       train_loss = train_loss,

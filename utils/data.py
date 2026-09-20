@@ -4,12 +4,12 @@ import numpy as np
 import glob
 import pickle
 import h5py
-import hydra
-
+import os
 
 def random_split(path, ratio, augmentation, seed):
 
     # return train and validation data paths
+    print(f'{path}/*.h5')
     dataset = sorted(glob.glob(f'{path}/*.h5'))
 
     # rearrange the data for augmentation
@@ -42,9 +42,9 @@ def random_split(path, ratio, augmentation, seed):
 def create_dataloader(args):
 
     # split into train and validation datasets
-    path = hydra.utils.get_original_cwd()+'/'+args.dataset.path
+    path = args.dataset.path
     ratio = args.dataset.ratio
-    train_list, test_list = random_split(path, 
+    train_list, test_list = random_split(path,
                                          args.dataset.ratio,
                                          args.dataset.augmentation,
                                          args.dataset.seed
@@ -58,8 +58,12 @@ def create_dataloader(args):
         pickle.dump(dataset_info, f)
 
     # dataset
-    train_set = HDF5Dataset(train_list, args.dataset.use_cache, args.dataset.cache_size)
-    test_set = HDF5Dataset(test_list)
+    train_set = HDF5Dataset(train_list, args.dataset.use_cache, args.dataset.cache_size, args.dataset.mesh_after_crop)
+    test_set = HDF5Dataset(
+        test_list,
+        use_cache=False,
+        mesh_after_crop=args.dataset.mesh_after_crop,
+    )
 
     # define dataloader
     train_loader = DataLoader(dataset=train_set,
@@ -78,21 +82,24 @@ def create_dataloader(args):
 
     return train_loader, test_loader
 
-def load_dataloader(args):
+def load_dataloader(path, args):
 
     # load dataset information
-    path = hydra.utils.get_original_cwd()+'/'+args.load.dataloader
     with open(path,'rb') as f:
         data_list = pickle.load(f)
 
     # dataset
     train_list = data_list['train']
     test_list = data_list['test']
-    train_set = HDF5Dataset(train_list, args.dataset.use_cache, args.dataset.cache_size)
-    test_set = HDF5Dataset(test_list)
+    train_set = HDF5Dataset(train_list, args.dataset.use_cache, args.dataset.cache_size, args.dataset.mesh_after_crop)
+    test_set = HDF5Dataset(
+        test_list,
+        use_cache=False,
+        mesh_after_crop=args.dataset.mesh_after_crop,
+    )
 
 
-    
+
     # define dataloader
     train_loader = DataLoader(dataset=train_set,
                               batch_size=args.dataset.batch_size,
@@ -113,7 +120,7 @@ def load_dataloader(args):
 
 class HDF5Dataset(Dataset):
 
-    def __init__(self, path_list, use_cache = False, cache_size = 1):
+    def __init__(self, path_list, use_cache = False, cache_size = 1, mesh_after_crop = 0):
 
         super(HDF5Dataset, self).__init__()
         self.path = path_list
@@ -121,6 +128,8 @@ class HDF5Dataset(Dataset):
         self.cached_index = []
         self.cached_target = []
         self.cached_feature = []
+
+        self.mesh_after_crop = mesh_after_crop
 
         if use_cache:
             self.set_cache_data(path_list, cache_size)
@@ -136,6 +145,10 @@ class HDF5Dataset(Dataset):
             target, feature = self.load_hdf5(path)
             x = torch.from_numpy(feature)
             y = torch.from_numpy(target)
+
+        if self.mesh_after_crop:
+            x = CropCent3d(x, self.mesh_after_crop)
+            y = CropCent3d(y, self.mesh_after_crop)
 
         return x.float(), y.float()
 
@@ -178,3 +191,20 @@ class HDF5Dataset(Dataset):
         f.close()
 
         return target, feature
+
+def CropCent3d(x, output_meshsize):
+    # Perform center cropping
+    input_meshsize = x.shape[-1]
+    crop_size = (input_meshsize - output_meshsize) // 2
+    if x.ndim == 4:
+        x = x[:,
+            crop_size : (x.shape[-1] - crop_size),
+            crop_size : (x.shape[-1] - crop_size),
+            crop_size : (x.shape[-1] - crop_size)]
+    elif x.ndim ==3 :
+        x = x[
+            crop_size : (x.shape[-1] - crop_size),
+            crop_size : (x.shape[-1] - crop_size),
+            crop_size : (x.shape[-1] - crop_size)]
+
+    return x

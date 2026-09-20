@@ -1,11 +1,11 @@
-# SEISTA IO Module 
+# SEISTA IO Module
 # Writer: RG Lee
 # Ver. 1.0. Date : 2020/6/17
 # Description: SIESTA I/O interface
 
 #--------- Medules list ---------#
 
-import fortranfile as fortran
+from . import fortranfile as fortran
 import struct
 import numpy as np
 import glob
@@ -32,7 +32,7 @@ def readGrid(fname):
 
     f = fortran.FortranFile(fname)
     cell = f.readReals('d')
-    
+
     cell = np.reshape(cell,(3,3))
     temp = f.readInts('i')
 
@@ -93,7 +93,7 @@ def readDM(fname):
 
     # basis, spin
     tmp = f.readInts('i')
-    nb = tmp[0] 
+    nb = tmp[0]
     ns = tmp[1]
 
     numd     = np.zeros(nb, dtype = int)
@@ -119,7 +119,7 @@ def readDM(fname):
         listd[listdptr[m]:listdptr[m]+n] = f.readInts('i')
 
     for isp in range(ns):
-        for m in range(nb): 
+        for m in range(nb):
             n = numd[m]
             dm[listdptr[m]:listdptr[m]+n,isp] = f.readReals('d')
     f.close()
@@ -171,8 +171,8 @@ def readWFSX(fname):
 
         - wk(nkp) : Weight of each k-point
         - pk(3, nkp) : k-point vector
-        - eig(nao, nsp, nkp)  : Eigenvalue of 
-        - wf(1 or 2, nao, nao, nsp, nkp) : Eigenvector of each 
+        - eig(nao, nsp, nkp)  : Eigenvalue of
+        - wf(1 or 2, nao, nao, nsp, nkp) : Eigenvector of each
 
 
     '''
@@ -227,7 +227,7 @@ def readWFSX(fname):
 
     for ik in range(nkp):
         for isp in range(nsp):
-            
+
             dat = f.readRecord()
 
             val_list = struct.unpack('<idddd', dat[0:dat_size])
@@ -273,7 +273,7 @@ def readHSX(fname):
         - no_s : Number of basis orbitals per supercell
         - nspin : Spin polarization
         - maxnhtot : non zero
-        - gamma : 
+        - gamma :
         - indxuo(no_s) : Index of equivalant orbital in unit cell
 
         - numh : Number of nonzero elements of each row of hamiltonian matrix
@@ -293,16 +293,16 @@ def readHSX(fname):
         - zval(nspecies) : Valence charge for given atomic species
         - no(nspecies) : Total number of Basis orbitals for given atomic specie
 
-        - nquant(nspecies, no) : Principal quatum number for a given atomic basis 
+        - nquant(nspecies, no) : Principal quatum number for a given atomic basis
         - lquant(nspecies, no) : Total angular momentum quantum number of a given basis orbital
         - zeta(nspecies, no) : Zeta number of a given basis orbital
- 
+
     '''
 
     f = fortran.FortranFile(fname)
     no_u, no_s, nspin, maxnhtot = f.readInts('i')
     gamma = f.readInts('i')[0]
-    
+
     if gamma ==0:
         indxuo = f.readInts('i')
     else:
@@ -326,7 +326,7 @@ def readHSX(fname):
     hamilt = np.zeros((maxnhtot, nspin), dtype = float)
     Sover = np.zeros((maxnhtot,), dtype = float)
     xij = np.zeros((maxnhtot,3), dtype = float)
-    
+
 
     for io in range(no_u):
         ptr = listhptr[io]
@@ -355,7 +355,7 @@ def readHSX(fname):
         ptr = listhptr[io]
         n = numh[io]
         buff3[0: 3 * n] = f.readReals('f')
-        
+
         for i in range(n):
             xij[ptr+i,0] = buff3[3*i]
             xij[ptr+i,1] = buff3[3*i+1]
@@ -375,7 +375,7 @@ def readHSX(fname):
     ind_fn = dat_size
 
     for ispec in range(nspecies):
-        
+
         val_list = struct.unpack('<20sdi', dat[ind_st:ind_fn])
 
         label.append(val_list[0].strip())
@@ -393,21 +393,21 @@ def readHSX(fname):
         nquant.append([])
         lquant.append([])
         zeta.append([])
-        
+
         for io in range(no[ispec]):
             abuff, bbuff, cbuff = f.readInts('i')
-            
+
             nquant[-1].append(abuff)
-            lquant[-1].append(bbuff)            
+            lquant[-1].append(bbuff)
             zeta[-1].append(cbuff)
-            
+
     na_u = f.readInts('i')[0] # number of species
     isa = np.zeros((na_u,), dtype = int)
     iaorb = np.zeros((no_u,), dtype = int)
     iphorb = np.zeros((no_u,), dtype = int)
 
     isa = f.readInts('i')
-    
+
     obuff = np.zeros((2*no_u), dtype = int)
     obuff = f.readInts('i')
     for i in range(no_u):
@@ -439,7 +439,7 @@ def readHSX(fname):
                 zz[nao] = zeta[it][io]
                 nao += 1
             io = io + 2*lorb + 1
-           
+
     return numh, listhptr, listh, indxuo, hamilt, Sover, xij, za, zc, zn, zl, zx, zz
 
 
@@ -459,12 +459,12 @@ def readDIM(fname):
     MAXNA = f.readInts('i')[0]
 
     f.close()
-   
+
     return MAXA, MAXO, MAXUO, NSPIN, MAXNH, MAXNA
 
 
 def readPLD(fname, MAXA, MAXO):
-    
+
 
     '''
     read unformatted SIESTA PLD file
@@ -499,7 +499,7 @@ def readPLD(fname, MAXA, MAXO):
     DATM = np.zeros((MAXO), dtype = np.float64)
     ISA = np.zeros((MAXA), dtype = int)
     LASTO = np.zeros((MAXA+1), dtype = int)
-    CELL = np.zeros((3,3), dtype = np.float64) 
+    CELL = np.zeros((3,3), dtype = np.float64)
     NSC = np.zeros((3), dtype = int)
     XA = np.zeros((3,MAXA), dtype = np.float64)
 
@@ -531,9 +531,9 @@ def readPLD(fname, MAXA, MAXO):
 
 
 def readIon(fname):
-    
+
     pao_basis = {}
-    
+
     with open(fname) as f:
 
         while(1):
@@ -542,52 +542,52 @@ def readIon(fname):
 
         symbol = f.readline().split()[0]
         label = f.readline().split()[0]
-                    
+
         f.readline() # atomic number
         f.readline() # valence charge
         f.readline() # mass
         f.readline() # self energy
         atom_info = f.readline()
         atom_info = atom_info.split()
-                    
+
         lmax = int(atom_info[0])
         number_of_nl = int(atom_info[1])
-                
+
         atom_info = {
-                    'symbol' : symbol,    
+                    'symbol' : symbol,
                     'label'  : label,
                     'lmax'   : lmax
                     }
-                    
+
         f.readline() # KB
         f.readline() # strat PAOs
-                    
+
         for iqn in range(number_of_nl):
             line = f.readline()
             word = line.split()
-                
+
             l = int(word[0])
             n = int(word[1])
             z = int(word[2])
             pol = int(word[3])
             pop = float(word[4])
-                       
+
             line = f.readline()
             word = line.split()
-                        
+
             npts = int(word[0])
             delta = float(word[1])
             cutoff = float(word[2]) * bohr2ang # convert unit!
             r = np.zeros((npts), dtype = np.float64)
             phi = np.zeros((npts), dtype = np.float64)
-                        
+
             for ir in range(npts):
                 line = f.readline()
                 word = line.split()
-                            
+
                 r[ir] = np.float64(word[0]) * bohr2ang # convert unit!
                 phi[ir] = np.float64(word[1])
-                
+
             if n in pao_basis.keys():
                 if l in pao_basis[n].keys():
                     if z in pao_basis[n][l].keys():
@@ -614,12 +614,12 @@ def readIon(fname):
                 pao_basis[n][l][z].update({'cutoff':cutoff})
 
         f.close()
-        
+
     return pao_basis
 
 
 def readStruct():
-    
+
     struct_file = glob.glob('STRUCT.fdf')[0]
 
     CELL = np.zeros((3,3), dtype = float)
@@ -629,7 +629,7 @@ def readStruct():
         for i, l in enumerate(f):
             line = l
             word = line.split()
-            
+
             if len(word) >= 2:
                 if word[0] == 'NumberOfAtoms':
                     number_of_atoms = int(word[1])
@@ -649,7 +649,7 @@ def readStruct():
                         cell_vals = cell_line.split()
                         CELL[ix][0] = cell_vals[0]
                         CELL[ix][1] = cell_vals[1]
-                        CELL[ix][2] = cell_vals[2]        
+                        CELL[ix][2] = cell_vals[2]
                     CELL = CELL * lattice_constant
                 if word[0] == 'AtomicCoordinatesFormat':
                     if word[1] == 'ScaledCartesian':
@@ -666,7 +666,7 @@ def readStruct():
                         ATOMS[ia][1] = atom_coord[1]
                         ATOMS[ia][2] = atom_coord[2]
                         SPEC[ia] = species[int(atom_coord[3])-1]
-                        
+
                     ATOMS = ATOMS * parameter
 
     return CELL, ATOMS, SPEC

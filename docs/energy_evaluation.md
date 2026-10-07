@@ -116,11 +116,11 @@ Dxc_pcc = Dxc + Epcc,xc
         = Exc[nv + nc] - Sum_s integral nv,s Vxc,s dr.
 ```
 
-The patch accumulates `Epcc,xc` immediately after `cellXC`, while `Vscf` still
-contains the pure XC potential, and then returns both the existing raw `Dxc`
-and the new `Dxc_pcc`. This is why the added quantity is named `Dxc_pcc`: it is
-the XC double-counting correction aligned with a valence-state band sum after
-the partial-core term has been restored.
+The SIESTA implementation accumulates `Epcc,xc` immediately after `cellXC`,
+while `Vscf` still contains the pure XC potential, and then returns both the
+existing raw `Dxc` and the new `Dxc_pcc`. This is why the added quantity is
+named `Dxc_pcc`: it is the XC double-counting correction aligned with a
+valence-state band sum after the partial-core term has been restored.
 
 For one previously inspected 16-atom fixed-RHO example, the values were
 
@@ -206,12 +206,12 @@ The `Etot_bs` formula uses `Uscf`, not `DUscf`.
 
 ## Source implementation
 
-The public patch is
-[`tools/siesta/siesta-4.1.5-dxc-pcc-etot-bs.patch`](../tools/siesta/siesta-4.1.5-dxc-pcc-etot-bs.patch).
-It targets SIESTA 4.1.5 at the exact commit documented in
-[`tools/siesta/README.md`](../tools/siesta/README.md).
+The maintained SIESTA 4.1.5 implementation is in the `main` branch of
+[`YHKlab/SIESTA-for-DeepSCF`](https://github.com/YHKlab/SIESTA-for-DeepSCF).
+DeepSCF consumes the printed diagnostics and does not patch SIESTA source code
+at runtime.
 
-| Source file | Role in the patch |
+| Source file | Role in the implementation |
 |---|---|
 | `Src/dhscf.F` | Integrates the partial-core XC-potential expectation after `cellXC`, performs MPI reduction, and exposes optional `Dxc_pcc_out`. |
 | `Src/grdsam.F` | Carries and averages `Dxc_pcc` across `GridCellSampling` points. |
@@ -231,10 +231,10 @@ Etot_bs = Ebs - Uscf + Dxc_pcc
 Etot_bs = Etot_bs + Ena + Uatm - Enaatm - Eions
 ```
 
-and prints energies in eV following the surrounding SIESTA style. The patch
-does not change the SCF loop, replace `Etot`, or integrate a new density inside
-`write_subs.F`; it only transports the already computed diagnostic and prints
-the reconstruction.
+and prints energies in eV following the surrounding SIESTA style. The
+implementation does not change the SCF loop, replace `Etot`, or integrate a new
+density inside `write_subs.F`; it only transports the already computed
+diagnostic and prints the reconstruction.
 
 ## Optional terms that require a separate audit
 

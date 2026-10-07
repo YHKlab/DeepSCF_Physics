@@ -5,10 +5,10 @@
 </p>
 
 DeepSCF learns the map from an initial electron density and grid-projected
-atomic features to a self-consistent electron density. This `physics-update`
-branch extends the original implementation with a physics-aware training path,
-reproducible preprocessing tools, fixed-density SIESTA postprocessing, and a
-band-sum-based energy diagnostic for predicted densities.
+atomic features to a self-consistent electron density. This repository extends
+the original implementation with a physics-aware training path, reproducible
+preprocessing tools, fixed-density SIESTA postprocessing, and a band-sum-based
+energy diagnostic for predicted densities.
 
 The method is described in [*Convolutional network learning of self-consistent
 electron density via grid-projected atomic fingerprints*](https://doi.org/10.1038/s41524-024-01433-0).
@@ -20,7 +20,7 @@ electron density via grid-projected atomic fingerprints*](https://doi.org/10.103
 - SIESTA-grid-to-HDF5 preprocessing with recorded channel scaling.
 - Prediction of SIESTA-format `.RHO` files.
 - Read-only comparison of completed fixed-RHO and self-consistent calculations.
-- A version-specific SIESTA 4.1.5 patch that prints `Dxc_pcc` and `Etot_bs`.
+- A companion SIESTA 4.1.5 source that prints `Dxc_pcc` and `Etot_bs`.
 
 This repository does not include trained weights, datasets, pseudopotentials,
 completed DFT results, or calculation-submission scripts.
@@ -31,8 +31,7 @@ The code preserves the Python 3.7 / PyTorch 1.12 environment of the original
 implementation.
 
 ```bash
-git clone --branch physics-update \
-  https://github.com/YHKlab-MSJeong/DeepSCF_Physics.git
+git clone https://github.com/YHKlab/DeepSCF_Physics.git
 cd DeepSCF_Physics
 python -m pip install -r requirements.txt
 ```
@@ -159,21 +158,26 @@ expectation value of the exchange-correlation potential when nonlinear core
 corrections are present. The derivation, source mapping, assumptions, and
 limitations are documented in [`docs/energy_evaluation.md`](docs/energy_evaluation.md).
 
-### Apply the SIESTA 4.1.5 output patch
+### Use the companion SIESTA source
 
-The patch targets
-[`YHKlab-RGLee/SIESTA-for-DeepSCF`](https://github.com/YHKlab-RGLee/SIESTA-for-DeepSCF)
-commit `43eb5a811d3391c6b9e7c6367c7624363cb3b907`. From the top of that SIESTA
-source tree, run:
+The required energy outputs are implemented directly in the `main` branch of
+[`YHKlab/SIESTA-for-DeepSCF`](https://github.com/YHKlab/SIESTA-for-DeepSCF).
+Clone that repository instead of patching another SIESTA source tree:
 
 ```bash
-/path/to/DeepSCF_Physics/tools/siesta/apply_dxc_pcc_etot_bs_siesta415.sh
+git clone https://github.com/YHKlab/SIESTA-for-DeepSCF.git
+cd SIESTA-for-DeepSCF
+mkdir Obj
+cd Obj
+sh ../Src/obj_setup.sh
+# Install or generate arch.make for this machine, then:
+make -j2 siesta
 ```
 
-The script verifies the source version and expected files, performs a dry run,
-creates non-overwriting dated backups, and applies the patch. A second run is
-an idempotent no-op. It does not compile SIESTA or start a calculation. See
-[`tools/siesta/README.md`](tools/siesta/README.md) for the exact support scope.
+Use a fresh object directory so its generated Makefile and `VPATH` select the
+companion repository's `Src/` tree. The compiler, MPI, and external-library
+settings in `arch.make` remain site-specific. This DeepSCF repository does not
+modify SIESTA source code at runtime or start a calculation.
 
 ### Compare completed calculations
 

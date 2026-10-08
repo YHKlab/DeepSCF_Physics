@@ -207,7 +207,7 @@ The `Etot_bs` formula uses `Uscf`, not `DUscf`.
 ## Source implementation
 
 The maintained SIESTA 4.1.5 implementation is in the `main` branch of
-[`YHKlab/SIESTA-for-DeepSCF`](https://github.com/YHKlab/SIESTA-for-DeepSCF).
+[`YHKlab-RGLee/SIESTA-for-DeepSCF`](https://github.com/YHKlab-RGLee/SIESTA-for-DeepSCF).
 DeepSCF consumes the printed diagnostics and does not patch SIESTA source code
 at runtime.
 

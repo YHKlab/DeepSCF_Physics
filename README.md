@@ -161,11 +161,11 @@ limitations are documented in [`docs/energy_evaluation.md`](docs/energy_evaluati
 ### Use the companion SIESTA source
 
 The required energy outputs are implemented directly in the `main` branch of
-[`YHKlab/SIESTA-for-DeepSCF`](https://github.com/YHKlab/SIESTA-for-DeepSCF).
+[`YHKlab-RGLee/SIESTA-for-DeepSCF`](https://github.com/YHKlab-RGLee/SIESTA-for-DeepSCF).
 Clone that repository instead of patching another SIESTA source tree:
 
 ```bash
-git clone https://github.com/YHKlab/SIESTA-for-DeepSCF.git
+git clone https://github.com/YHKlab-RGLee/SIESTA-for-DeepSCF.git
 cd SIESTA-for-DeepSCF
 mkdir Obj
 cd Obj

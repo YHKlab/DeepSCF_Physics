@@ -94,7 +94,12 @@ def output_directory(root, name, subdirectory):
 
 
 def main(args):
-    predicted_root = Path(args.dft.predicted).resolve()
+    split = 'test' if args.is_test else 'train'
+    predicted_root = Path(f'calc_{split}').resolve()
+    if not predicted_root.is_dir():
+        raise FileNotFoundError(
+            f'Cannot find predicted calculation root: {predicted_root}'
+        )
     reference_root = Path(args.dft.reference).resolve()
     names = sorted(path.name for path in predicted_root.iterdir() if path.is_dir())
     if not names:
@@ -176,7 +181,7 @@ def main(args):
         },
     }
 
-    with Path(args.dft.result).open('wb') as handle:
+    with Path(f'dft_results_{split}.pkl').open('wb') as handle:
         pickle.dump(data, handle)
 
 

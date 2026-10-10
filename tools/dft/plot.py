@@ -33,7 +33,8 @@ def parity_plot(reference, predicted, color, name):
 
 
 def main(args):
-    result = Path(args.dft.result)
+    split = 'test' if args.is_test else 'train'
+    result = Path(f'dft_results_{split}.pkl')
     with result.open('rb') as handle:
         data = pickle.load(handle)
 

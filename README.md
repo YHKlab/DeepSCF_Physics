@@ -177,15 +177,20 @@ an idempotent no-op. It does not compile SIESTA or start a calculation. See
 
 ### Compare completed calculations
 
-Set the two calculation roots in `dft.predicted` and `dft.reference`. Direct
-children are paired by directory name. By default, the fixed-RHO output is
-read from each child's `OUT/` directory and the reference directly from its
-child directory.
+Set `is_test` and the reference calculation root in `dft.reference`. The
+evaluator automatically reads predicted calculations from `calc_test` when
+`is_test: true`, or `calc_train` when `is_test: false`, relative to the current
+working directory. Direct children are paired by directory name. By default,
+the fixed-RHO output is read from each child's `OUT/` directory and the
+reference directly from its child directory.
 
 ```bash
 python -m tools.dft.evaluate --input input.yaml
 python -m tools.dft.plot --input input.yaml
 ```
+
+The evaluator writes `dft_results_test.pkl` or `dft_results_train.pkl` for the
+selected split, and the plotting command reads the same file automatically.
 
 The evaluator is read-only with respect to calculation directories. It parses
 `Etot_bs` for predicted calculations and `Etot` for references, plus one `.FA`

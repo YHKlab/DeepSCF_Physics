@@ -39,10 +39,8 @@ predict:
     grid_spacing: 0.2
 
 dft:
-  predicted: /path/to/fixed-rho/calculations
   reference: /path/to/self-consistent/calculations
   predicted_output_subdir: OUT
   reference_output_subdir: ''
   predicted_energy_label: Etot_bs
   reference_energy_label: Etot
-  result: dft_results_test.pkl

@@ -1,26 +1,30 @@
-# DeepSCF Physics Update
+# DeepSCF Physics
+
+Electron-density prediction with physics-aware training and SIESTA-based evaluation.
 
 <p align="center">
   <img height="240" src="./logo/shematics.png" alt="DeepSCF workflow"/>
 </p>
 
-DeepSCF learns the map from an initial electron density and grid-projected
-atomic features to a self-consistent electron density. This `physics-update`
-branch extends the original implementation with a physics-aware training path,
-reproducible preprocessing tools, fixed-density SIESTA postprocessing, and a
-band-sum-based energy diagnostic for predicted densities.
+DeepSCF Physics predicts self-consistent electron densities from an initial
+electron density and grid-projected atomic features. The workflow covers
+SIESTA-grid preprocessing, standard or physics-aware training, density
+prediction and evaluation, and fixed-density SIESTA energy analysis.
 
-The method is described in [*Convolutional network learning of self-consistent
+This repository extends the original DeepSCF implementation. The underlying
+method is described in [*Convolutional network learning of self-consistent
 electron density via grid-projected atomic fingerprints*](https://doi.org/10.1038/s41524-024-01433-0).
 
-## What is included
+## Features
 
-- The current multi-file DeepSCF model and standard training path.
-- `train_physics.py` for density-gradient regularization.
 - SIESTA-grid-to-HDF5 preprocessing with recorded channel scaling.
+- Standard density training and optional gradient or Laplacian regularization
+  with 3-point or 5-point finite-difference operators.
+- Density-error evaluation for saved train or test splits.
 - Prediction of SIESTA-format `.RHO` files.
-- Read-only comparison of completed fixed-RHO and self-consistent calculations.
-- A version-specific SIESTA 4.1.5 patch that prints `Dxc_pcc` and `Etot_bs`.
+- Fixed-density energy analysis using a version-specific SIESTA 4.1.5 output
+  patch for `Dxc_pcc` and `Etot_bs`, with read-only comparison of completed
+  predicted-density and self-consistent calculations.
 
 This repository does not include trained weights, datasets, pseudopotentials,
 completed DFT results, or calculation-submission scripts.
@@ -97,7 +101,7 @@ Copy the initial-density channel's entries from `scale.yaml` to
 includes the target as channel 0, whereas assembled model features start from
 the converted `feature1` channel.
 
-## Training and evaluation
+## Training
 
 Standard density training:
 
@@ -111,18 +115,34 @@ Physics-aware training with the regularizers selected in the YAML file:
 python train_physics.py --input input.yaml
 ```
 
-Evaluate density error or density-gradient error:
-
-```bash
-python evaluate.py --input input.yaml
-python evaluate_grad.py --input input.yaml
-```
+Supported regularizers are `gradient_3p`, `gradient_5p`, `laplacian_3p`, and
+`laplacian_5p`. Set their weights with
+`train.loss.regularization_weight.gradient` or
+`train.loss.regularization_weight.laplacian`, respectively. The example uses
+`gradient_3p`; `train.py` uses only the density loss.
 
 Checkpoints named `<epoch>_model.pt` contain model, optimizer, scheduler, and
 epoch state. The final `model.pt` contains only the model state. Dataset split
 metadata is written to `data.pkl`. These generated files are ignored by Git.
 
-## Predict a SIESTA density
+## Density evaluation
+
+Set `evaluate.model` to a saved checkpoint and `evaluate.target` to the saved
+`data.pkl`. Use `is_test: true` for the test split or `is_test: false` for the
+train split, then run:
+
+```bash
+python evaluate.py --input input.yaml
+```
+
+The evaluator writes per-sample relative-L1 density errors (%) to
+`evaluate.txt` and an aggregate error to `summary.txt`. The aggregate is
+100 times the summed absolute density error divided by the summed reference
+density over the selected samples, not the mean or median of per-sample
+percentages. Evaluation measures density accuracy independently of the
+regularizer used during training.
+
+## Density prediction
 
 Set `predict.model`, `predict.target.path`, and
 `predict.target.grid_spacing` in the input file, then run:
@@ -137,27 +157,28 @@ for each selected sample. The current writer constructs an orthorhombic cell
 from the mesh and scalar grid spacing; use a system-specific writer when the
 actual cell is non-orthorhombic or cannot be reconstructed this way.
 
-## Fixed-RHO SIESTA evaluation
+## SIESTA energy evaluation
 
 A predicted density is evaluated in a non-self-consistent SIESTA calculation
 that reads the external `.RHO` and keeps it fixed. For a consistent comparison,
 predicted and reference calculations must use the same geometry, species,
 pseudopotentials, basis, mesh, k points, occupations, and energy settings.
 
-The ordinary fixed-density `Etot` mixes terms evaluated from the supplied
-density with a band sum from the Hamiltonian built from that density. This is
-not generally the most useful energy comparison for a non-self-consistent
-machine-learned density. The added diagnostic reconstructs the basic
-Kohn-Sham energy from the band sum:
+For a non-self-consistent input density, SIESTA's ordinary `Etot` can combine
+terms from the supplied density and the output density matrix. The `Etot_bs`
+diagnostic uses the occupied-state band sum and corrections evaluated from
+the supplied density:
 
 ```text
 Etot_bs = Ebs - Uscf + Dxc_pcc + Ena + Uatm - Enaatm - Eions
 ```
 
-Here `Dxc_pcc`, rather than the raw `Dxc`, restores the valence-density
-expectation value of the exchange-correlation potential when nonlinear core
-corrections are present. The derivation, source mapping, assumptions, and
-limitations are documented in [`docs/energy_evaluation.md`](docs/energy_evaluation.md).
+`Dxc_pcc` corrects raw `Dxc` for the partial-core XC-potential contribution
+when nonlinear core corrections are present. This is an energy diagnostic,
+not a force functional or a universal replacement for SIESTA's total energy.
+Optional terms such as external fields, DFT+U, and charged-cell corrections
+require a separate audit. See [`docs/energy_evaluation.md`](docs/energy_evaluation.md)
+for the derivation, source mapping, and limitations.
 
 ### Apply the SIESTA 4.1.5 output patch
 
@@ -173,7 +194,9 @@ source tree, run:
 The script verifies the source version and expected files, performs a dry run,
 creates non-overwriting dated backups, and applies the patch. A second run is
 an idempotent no-op. It does not compile SIESTA or start a calculation. See
-[`tools/siesta/README.md`](tools/siesta/README.md) for the exact support scope.
+[`tools/siesta/README.md`](tools/siesta/README.md) for supported sources and
+rebuild instructions. Rebuild SIESTA and run the fixed-density calculations
+with the patched executable before evaluating their outputs.
 
 ### Compare completed calculations
 
@@ -197,12 +220,6 @@ The evaluator is read-only with respect to calculation directories. It parses
 and one `.EIG` file in each output directory. The result pickle and parity
 plots are analysis outputs, not proof of physical convergence; convergence
 must be established from the original SIESTA outputs.
-
-`Etot_bs` implements the basic Kohn-Sham decomposition used here. Optional
-contributions such as external fields, DFT+U, charged-cell corrections,
-molecular mechanics, metadynamics, or custom constraints require an explicit
-term-by-term audit. It is an energy diagnostic, not a force functional and not
-a universal replacement for SIESTA's total energy.
 
 ## Citation
 
